@@ -1,0 +1,366 @@
+```set template default.html```
+```set title nsfs cheat sheet```
+```set autoapi ext```
+```set tag:defcode gml```
+```setmd intro
+This is a "cheat sheet" for the "nsfs" extension by YellowAfterlife.\
+The extension can be acquired from
+[GM Marketplace](https://marketplace.yoyogames.com/assets/5172/non-sandboxed-filesystem)
+or [itch.io](https://yellowafterlife.itch.io/gamemaker-nsfs).\
+*Note:* in GMS2.2 and newer, the extension is _mostly_ supplanted by the 
+"Game Options ➜ (your platform) ➜ Disable file system sandbox" checkbox,
+but can still be useful due to additional functions that it offers.
+```
+#[General functions](nsfs_general) {
+	#[nsfs_is_available]() {
+		This variable holds status (`true` or `false`) of whether the native extension for NSFS was successfully loaded.
+		The extension may not be loaded in a few cases:
+		--{
+		--	Extension is not supported on the target platform.
+		--	Extension file is amiss (e.g. the user did not unzip the game before running).
+		}
+		As per GameMaker rules, all calls to unavailable extensions return `0` instead,
+		so you may want to check this and notify the user prior to performing any operations.
+	}
+	#[nsfs_status](nsfs_status) {
+		Some functions provide additional feedback aside of usual success/failure result.
+		
+		In those cases, when the result is `false`, this global variable holds the status/error code that can be used for troubleshooting the issue.
+		
+		On Windows, values are as per [System Error Codes](https://msdn.microsoft.com/en-us/library/windows/desktop/ms681381(v=vs.85).aspx) reference.
+	}
+	#[nsfs_set_directory(new_working_directory)]() {
+		By default, when a relative path is specified, NSFS will read/write files in game's program directory. If you want to use some other directory instead (e.g. [save directory](http://docs.yoyogames.com/source/dadiospice/002_reference/file%20handling/file%20system%20limits.html)), you can use this function to change the extension's working directory.
+		
+		The function returns whether the working directory was successfully changed;
+		[nsfs_status] contains the error code if it couldn't be.
+		
+		One of the few reasons to failure of this function is the target directory not being a valid path (use [directory_exists](http://docs.yoyogames.com/source/dadiospice/002_reference/file%20handling/directory_exists.html) or [directory_exists_ns] to check).
+	}
+	#[nsfs_get_directory()]() {
+		Returns the extension's working directory.
+		
+		If that somehow fails, returns an empty string and sets [nsfs_status].
+	}
+}
+#[File manipulation functions](nsfs_file) {
+	#[file_exists_ns(path)]() {
+		Returns whether the file exists at the given path.
+		
+		Returns `false` if there's a directory of the same name at the path.
+	}
+	#[file_copy_ns(oldpath, newpath)]() {
+		Copies a file between locations, returns whether successful.
+		
+		In case of failure, [nsfs_status] contains the error code.
+	}
+	#[file_rename_ns(oldname, newname)]() {
+		Renames a file, returns whether successful.
+		
+		Note that if the `oldname` contains a path, `newname` should as well.
+		
+		In case of failure, [nsfs_status] contains the error code.
+	}
+	#[file_move_ns(oldpath, newpath)]() {
+		Moves a file to a different location, returns whether successful.
+		
+		In case of failure, [nsfs_status] contains the error code.
+	}
+	#[file_delete_ns(path)]() {
+		Deletes a file, returns whether successful.
+		
+		In case of failure, [nsfs_status] contains the error code.
+		
+		Note that you can't remove files currently in use by an application (incl. yours).
+	}
+}
+#[Directory manipulation functions]() {
+	#[directory_exists_ns(path)]() {
+		Returns whether the file exists at the given path.
+		
+		Returns `false` if there's a directory of the same name at the path.
+	}
+	#[directory_copy_ns(oldpath, newpath)]() {
+		Copies a directory between locations, returns whether successful.
+		
+		In case of failure, [nsfs_status] contains the error code.
+	}
+	#[directory_rename_ns(oldname, newname)]() {
+		Renames a directory, returns whether successful.
+		
+		Note that if the `oldname` contains a path, `newname` should as well.
+		
+		In case of failure, [nsfs_status] contains the error code.
+		
+		Directories cannot be renamed if some of their files are currently in use by applications (incl. yours).
+	}
+	#[directory_move_ns(oldpath, newpath)]() {
+		Moves a directory to a different location, returns whether successful.
+		
+		In case of failure, [nsfs_status] contains the error code.
+		
+		Directories cannot be moved if some of their files are currently in use by applications (incl. yours).
+	}
+	#[directory_create_ns(path)]() {
+		Creates a directory at a location, returns whether successful.
+		
+		In case of failure, [nsfs_status] contains the error code.
+		
+		Note that the parent directory must exist for this to work.
+	}
+	#[directory_delete_ns(path)]() {
+		Deletes a directory, returns whether successful.
+		
+		In case of failure, [nsfs_status] contains the error code.
+		
+		Directories cannot be deleted if some of their files are currently in use by applications (incl. yours).
+	}
+}
+#[File/directory attribute functions]() {
+	#[file_get_attributes_ns(path)]() {
+		Returns attributes of a file/directory at given path.
+		
+		Returned attributes (a set of bit flags) are as per [MSDN specification](https://msdn.microsoft.com/en-us/library/windows/desktop/gg258117(v=vs.85).aspx).
+		
+		If attributes cannot be retrieved (e.g. no object exists at path), returned value is `-1`, and [nsfs_status] contains the error code.
+	}
+	#[file_set_attributes_ns(path, newattributes)]() {
+		Changes the attributes of a file/directory at the given path, returns whether successful.
+		The attributes (a set of bit flags) are as per [MSDN specification](https://msdn.microsoft.com/en-us/library/windows/desktop/gg258117(v=vs.85).aspx).
+		
+		If attributes cannot be changed, [nsfs_status] contains the error code.
+	}
+	#[file_get_size_ns(path)]() {
+		Returns the size of the file at given path, in bytes.
+		
+		If the size cannot be measured, returns -1 and sets [nsfs_status].
+	}
+	---
+	```setmd time_0
+	in GameMaker (`date_`) format
+	```
+	```setmd time_1
+	If the time cannot be measured (file doesn't exist / cannot be accessed),
+	returns 0 and sets [nsfs_status].
+	```
+	#[file_get_ctime_ns(path)]() {
+		Returns the creation time of the file at given path, %[time_0].
+		
+		%[time_1]
+	}
+	#[file_get_mtime_ns(path)]() {
+		Returns the "last write" time of the file at given path, %[time_0].
+		
+		%[time_1]
+	}
+	#[file_get_atime_ns(path)]() {
+		Returns the "last access" time of the file at given path, %[time_0].
+		
+		Note that this time marker is [throttled](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfiletime#remarks) by Windows to avoid excessive disk use.
+		
+		%[time_1]
+	}
+}
+#[File/directory search functions]() {
+	#[file_find_first_ns(mask)]() {
+		Begins the search for files/directories matching the given mask and returns the first result.
+		Returns "" and sets [nsfs_status] if nothing can be found.
+		
+		This is much akin to [file_find_first](http://docs.yoyogames.com/source/dadiospice/002_reference/file%20handling/file%20system/file_find_first.html), but with one remark: instead of taking attributes as a second parameter (which gives very limited freedom to filtering results), there is a [file_find_attributes_ns] function that returns the attributes of the current file in search.
+		
+		For example, if you wanted to pick through just files (no directories) in `maps` subdirectory in game's directory, you would do that like so:
+		```
+		for (var f = file_find_first_ns("maps/*.*"); f != ""; f = file_find_next_ns()) {
+		    if (file_find_attributes_ns() & fa_directory) continue;
+		    // file is not a directory - do something here
+		    show_debug_message(f + ": " + string(file_find_size_ns() / 1024) + "KB");
+		}
+		file_find_close();
+		```
+		which would display results like `some.map` (given `maps/some.map`).
+	}
+	#[file_find_next_ns()]() {
+		Returns the next result matching the mask (from [file_find_first_ns]).
+		
+		Returns `""` if there are no more results left.
+	}
+	#[file_find_close_ns()]() {
+		Finalizes the current search and frees up the related resources.
+		
+		[file_find_first_ns] will automatically do this prior to starting the next search if you forget, but it is recommended that you do this by yourself when a search is complete.
+	}
+	#[file_find_attributes_ns()]() {
+		Returns the attributes (much like [file_get_attributes_ns]) of the current (most recently returned) file in search. Due to how file search works, this is generally faster than retrieving the attributes by absolute path.
+	}
+	#[file_find_size_ns()]() {
+		Returns the size (in bytes) of the current (most recently returned) file in search. This is generally faster than retrieving the size by absolute path.
+		
+		This function considers directories to have size of 0 bytes.
+	}
+}
+#[Text file functions](file_text_) {
+	#[file_text_open_read_ns(path, codepage)]() {
+		Opens a text file at given path for reading and returns file ID.
+		
+		Codepage numbers can be found [on MSDN](https://msdn.microsoft.com/en-us/library/windows/desktop/dd317756(v=vs.85).aspx).
+		
+		`-1` can be specified as a codepage to use UTF-8 (GMS default).
+		
+		If the file cannot be opened for reading, returns `-1` and sets [nsfs_status].
+		
+		IDs used by these functions are separate from those used by built-in ones.
+	}
+	#[file_text_open_write_ns(path, codepage)]() {
+		Opens a text file at given path for writing and returns file ID.
+		
+		If the file is already present, it is overwritten.
+		
+		Codepage numbers can be found [on MSDN](https://msdn.microsoft.com/en-us/library/windows/desktop/dd317756(v=vs.85).aspx).
+		
+		`-1` can be specified as a codepage to use UTF-8 (GMS default).
+		
+		If the file cannot be opened for writing, returns `-1` and sets [nsfs_status].
+	}
+	#[file_text_open_append_ns(path, codepage)]() {
+		Opens a text file at given path for writing and returns file ID.
+		
+		If the file is already present, appends to the end of the file.
+		
+		Codepage numbers can be found [on MSDN](https://msdn.microsoft.com/en-us/library/windows/desktop/dd317756(v=vs.85).aspx).
+		
+		`-1` can be specified as a codepage to use UTF-8 (GMS default).
+		
+		If the file cannot be opened for writing, returns `-1` and sets [nsfs_status].
+	}
+	#[file_text_close_ns(file_id)]() {
+		Closes the given text file, freeing it for operations or use by other applications.
+		
+		Returns whether the file was actually open (and thus could be closed).
+	}
+	#[file_text_eof_ns(file_id)]() {
+		Returns whether end of file was reached for the given file.
+		
+		Only makes sense for files opened for reading.
+		
+		Returns `true` for invalid file IDs.
+	}
+	#[file_text_read_line_ns(file_id)]() {
+		Reads and returns the next line from the given file.
+		
+		This is equivalent to [file_text_read_string](http://docs.yoyogames.com/source/dadiospice/002_reference/file%20handling/files/file_text_read_string.html) + [file_text_readln](http://docs.yoyogames.com/source/dadiospice/002_reference/file%20handling/files/file_text_readln.html). That is, it reads and returns the text on the current line, and skips the line delimiter (CR\LF\CRLF\LFCR).
+		
+		Returns `""` if the file handle is invalid or end of file has been reached.
+	}
+	#[file_text_write_line_ns(file_id, text)]() {
+		Writes a string to the given file, returns whether successful.
+		
+		Adds a linebreak (CRLF) prior to writing automatically if it is not the first line.
+	}
+}
+#[INI functions]() {
+	#[ini_open_ns(path)]() {
+		Opens an INI file from absolute path.
+		
+		This is a wrapper around [string_load_ns] and [ini_open_from_string](http://docs.yoyogames.com/source/dadiospice/002_reference/file%20handling/ini%20files/ini_open_from_string.html).
+		
+		You can subsequently use the regular `ini_` functions to work with it and use [ini_close_ns] to close the file while applying changes (or regular `ini_close` if you have made none)
+	}
+	#[ini_close_ns()]() {
+		Closes an INI file previously opened via [ini_open_ns] and overwrites the file on disk if there have been changes.
+		
+		If the file cannot be written to, returns `-1` and sets [nsfs_status].
+	}
+}
+#[Buffer functions](buffer_) {
+	#[buffer_load_ns(path, kind = buffer_grow)]() {
+		Loads a GM buffer from the file and returns it's ID.
+		
+		Is a direct equivalent of the built-in [buffer_load](http://docs.yoyogames.com/source/dadiospice/002_reference/buffers/buffer_load.html) function.
+		
+		Second argument can be specified to use a different buffer kind for loaded information. If it isn't, GM default (`buffer_grow`) will be used.
+		
+		If the file cannot be read, returns `-1` and sets [nsfs_status].
+	}
+	#[buffer_save_ns(buffer, path)]() {
+		Saves the contents of the given buffer to a file, returns whether successful.
+		
+		Is akin to the built-in [buffer_save](http://docs.yoyogames.com/source/dadiospice/002_reference/buffers/buffer_save.html) function (but has a return value).
+		
+		If the file cannot be written to, returns `false` and sets [nsfs_status].
+	}
+	#[buffer_save_ext_ns(buffer, path, offset, size)]() {
+		Saves a subsection of the given buffer to a file, returns whether successful.
+		
+		Is akin to the built-in [buffer_save_ext](http://docs.yoyogames.com/source/dadiospice/002_reference/buffers/buffer_save_ext.html) function (but has a return value).
+		
+		If the file cannot be written to, returns `false` and sets [nsfs_status].
+	}
+}
+#[String functions](string_) {
+	#[string_load_ns(path)]() {
+		Returns the contents of the file at given path as a string.
+		
+		This can be a little faster than reading the file via buffer or `file_text` functions.
+		
+		If the file is missing or there is an error, returns `""` and sets [nsfs_status].
+	}
+	#[string_save_ns(string, path)]() {
+		Overwrites the contents of the file at given path with the given string.
+		
+		If the file cannot be written to, returns `false` and sets [nsfs_status].
+	}
+	#[string_codepage(string, oldcodepage, newcodepage)]() {
+		Converts contents of a string between codepages.
+		
+		Codepage numbers can be found [on MSDN](https://msdn.microsoft.com/en-us/library/windows/desktop/dd317756(v=vs.85).aspx).
+		
+		`-1` can be specified as a codepage to use UTF-8 (GMS default).
+		
+		This can be handy if you are getting strings in different encoding from non-filesystem sources.
+	}
+}
+#[Resource functions](asset_) {
+	#[sprite_add_ns(path, imgnumb, removeback, smooth, xorig, yorig)]() {
+		An equivalent of [sprite_add](http://docs.yoyogames.com/source/dadiospice/002_reference/game%20assets/sprites/sprite_add.html).
+		
+		If the file cannot be read, returns `-1` and sets [nsfs_status].
+	}
+	#[sprite_replace_ns(ind, nspath, imgnumb, removeback, smooth, xorig, yorig)]() {
+		An equivalent of [sprite_replace](http://docs.yoyogames.com/source/dadiospice/002_reference/game%20assets/sprites/sprite_replace.html).
+		
+		If the file cannot be read, returns `false` and sets [nsfs_status].
+	}
+	#[surface_save_ns(surface, path)]() {
+		An equivalent of [surface_save](http://docs.yoyogames.com/source/dadiospice/002_reference/surfaces/surface_save.html).
+		
+		If the file cannot be written to, returns `false` and sets [nsfs_status].
+	}
+	#[surface_save_part_ns(surface, path, x, y, width, height)]() {
+		An equivalent of [surface_save_part](http://docs.yoyogames.com/source/dadiospice/002_reference/surfaces/surface_save_part.html).
+		
+		If the file cannot be written to, returns `false` and sets [nsfs_status].
+	}
+	#[screen_save_ns(path)]() {
+		An equivalen of [screen_save](http://docs.yoyogames.com/source/dadiospice/002_reference/windows%20and%20views/screen_save.html).
+		
+		If the file cannot be written to, returns `false` and sets [nsfs_status].
+	}
+	#[screen_save_part_ns(path, x, y, width, height)]() {
+		An equivalen of [screen_save_part](http://docs.yoyogames.com/source/dadiospice/002_reference/windows%20and%20views/screen_save_part.html).
+		
+		If the file cannot be written to, returns `false` and sets [nsfs_status].
+	}
+}
+#[Limitations and workarounds](lim) {
+	If something is not supported by the extension out-of-box, you can usually replicate it by using [file_copy_ns] or [directory_copy_ns] to copy the item of interest to sandbox (`game_save_id + filename`) and then load it using the according sandboxed function.
+	
+	Similarly, for saving you can save things to the sandboxed directory first with built-in functions and then copy/move it to destination.
+	
+	The following are a few things worth noting on,
+	#[file_bin functions]() {
+		You can copy the file in/out of sandbox for processing, but you should seriously consider using a `buffer_fast` buffer for reading or `buffer_grow` buffer for writing instead - both are much faster than the legacy binary file functions.
+	}
+	#[audio_create_stream]() {
+		A thing to note here is that, unlike other functions, you'll need to keep the file around for the duration of using it. For this reason there is no "built-in" function included for this in nsfs.
+	}
+}

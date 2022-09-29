@@ -1,0 +1,8 @@
+nsfs-for-GMS1/*
+
+nsfs-for-GMS2/*
+!nsfs-for-GMS2/assetpackage.yy
+
+nsfs-for-GMS2.3+/*
+!nsfs-for-GMS2.3+/nsfs_23.yyp
+!nsfs-for-GMS2.3+/metadata.json
